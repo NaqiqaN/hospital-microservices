@@ -189,9 +189,13 @@ function App() {
 
   return (
     <div className="page-shell">
+      <div className="dashboard-glow dashboard-glow-one" />
+      <div className="dashboard-glow dashboard-glow-two" />
+
       <div className="app-container">
         <header className="hospital-header">
           <div>
+            <p className="dashboard-label">Hospital Management Dashboard</p>
             <h1>Chiron Hospital</h1>
           </div>
 
@@ -206,7 +210,11 @@ function App() {
           </div>
         </header>
 
-        <DashboardStats appointments={appointments} doctors={doctors} />
+        <DashboardStats
+          appointments={appointments}
+          doctors={doctors}
+          timeSlots={timeSlots}
+        />
 
         <BillReceipt
           bill={latestBill}
