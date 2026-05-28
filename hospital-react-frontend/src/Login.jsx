@@ -19,12 +19,22 @@ function Login({ onLogin }) {
     })
       .then((response) => response.text())
       .then((data) => {
+        if (
+          data.toLowerCase().includes("invalid") ||
+          data.toLowerCase().includes("failed") ||
+          data.toLowerCase().includes("not found") ||
+          data.trim() === ""
+        ) {
+          alert(data || "Login failed");
+          return;
+        }
+
         localStorage.setItem("token", data);
         onLogin();
       })
       .catch((error) => {
         console.log("Login error:", error);
-        alert("Login failed");
+        alert("Login failed. Make sure auth-service is running on port 8081.");
       });
   }
 
