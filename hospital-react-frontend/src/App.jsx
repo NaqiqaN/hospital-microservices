@@ -4,6 +4,8 @@ import AppointmentForm from "./components/AppointmentForm";
 import DashboardStats from "./components/DashboardStats";
 import SlotTable from "./components/SlotTable";
 import BillReceipt from "./components/BillReceipt";
+import Login from "./Login";
+import Register from "./Register";
 import "./App.css";
 
 const doctors = [
@@ -37,14 +39,29 @@ function App() {
   const [appointmentTime, setAppointmentTime] = useState("");
   const [latestBill, setLatestBill] = useState(null);
 
+  const [isLoggedIn, setIsLoggedIn] = useState(
+    localStorage.getItem("token") !== null
+  );
+
+  const [showRegister, setShowRegister] = useState(false);
+
   useEffect(() => {
-    fetchAppointments();
-  }, []);
+    if (isLoggedIn) {
+      fetchAppointments();
+    }
+  }, [isLoggedIn]);
 
   function fetchAppointments() {
-    fetch("https://hospital-management-system-98vl.onrender.com/hospital/appointments")
+    fetch("https://hospital-management-system-98vl.onrender.com/hospital/appointments", {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`
+      }
+    })
       .then((response) => response.json())
-      .then((data) => setAppointments(data));
+      .then((data) => setAppointments(data))
+      .catch((error) => {
+        console.log("Fetch appointments error:", error);
+      });
   }
 
   function bookAppointment() {
@@ -66,7 +83,10 @@ function App() {
 
     fetch("https://hospital-management-system-98vl.onrender.com/hospital/book", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`
+      },
       body: JSON.stringify(bookingData)
     })
       .then((response) => response.text())
@@ -78,6 +98,10 @@ function App() {
         setAppointmentTime("");
         setSelectedDoctor(doctors[0]);
         fetchAppointments();
+      })
+      .catch((error) => {
+        console.log("Book appointment error:", error);
+        alert("Booking failed");
       });
   }
 
@@ -92,7 +116,11 @@ function App() {
       return;
     }
 
-    fetch(`https://hospital-management-system-98vl.onrender.com/hospital/discharge/${patientId}/${hours}`)
+    fetch(`https://hospital-management-system-98vl.onrender.com/hospital/discharge/${patientId}/${hours}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`
+      }
+    })
       .then((response) => response.text())
       .then(() => {
         setLatestBill({
@@ -116,20 +144,68 @@ function App() {
   }
 
   function resetSystem() {
-    const confirmReset = confirm("This will delete all appointments and patient IDs. Continue?");
+    const confirmReset = confirm(
+      "This will delete all appointments and patient IDs. Continue?"
+    );
 
     if (!confirmReset) {
       return;
     }
 
     fetch("https://hospital-management-system-98vl.onrender.com/hospital/appointments/clear", {
-      method: "DELETE"
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`
+      }
     })
       .then((response) => response.text())
       .then(() => {
         setLatestBill(null);
         fetchAppointments();
+      })
+      .catch((error) => {
+        console.log("Reset error:", error);
+        alert("Reset failed");
       });
+  }
+
+  function logout() {
+    localStorage.removeItem("token");
+    setIsLoggedIn(false);
+    setAppointments([]);
+    setLatestBill(null);
+  }
+
+  if (!isLoggedIn) {
+    return (
+      <div className="page-shell">
+        <div className="app-container">
+          {showRegister ? (
+            <>
+              <Register />
+
+              <button
+                className="reset-btn"
+                onClick={() => setShowRegister(false)}
+              >
+                Already have an account? Login
+              </button>
+            </>
+          ) : (
+            <>
+              <Login onLogin={() => setIsLoggedIn(true)} />
+
+              <button
+                className="reset-btn"
+                onClick={() => setShowRegister(true)}
+              >
+                New user? Register
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -139,7 +215,16 @@ function App() {
           <div>
             <h1>Chiron Hospital</h1>
           </div>
-          <button className="reset-btn" onClick={resetSystem}>Reset System</button>
+
+          <div>
+            <button className="reset-btn" onClick={resetSystem}>
+              Reset System
+            </button>
+
+            <button className="reset-btn" onClick={logout}>
+              Logout
+            </button>
+          </div>
         </header>
 
         <DashboardStats appointments={appointments} doctors={doctors} />
@@ -166,7 +251,11 @@ function App() {
           timeSlots={timeSlots}
         />
 
-        <AppointmentList appointments={appointments} dischargePatient={dischargePatient} />
+        <AppointmentList
+          appointments={appointments}
+          dischargePatient={dischargePatient}
+        />
+
         <SlotTable appointments={appointments} doctors={doctors} />
       </div>
     </div>
