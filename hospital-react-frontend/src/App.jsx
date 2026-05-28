@@ -177,34 +177,13 @@ function App() {
   }
 
   if (!isLoggedIn) {
-    return (
-      <div className="page-shell">
-        <div className="app-container">
-          {showRegister ? (
-            <>
-              <Register />
-
-              <button
-                className="reset-btn"
-                onClick={() => setShowRegister(false)}
-              >
-                Already have an account? Login
-              </button>
-            </>
-          ) : (
-            <>
-              <Login onLogin={() => setIsLoggedIn(true)} />
-
-              <button
-                className="reset-btn"
-                onClick={() => setShowRegister(true)}
-              >
-                New user? Register
-              </button>
-            </>
-          )}
-        </div>
-      </div>
+    return showRegister ? (
+      <Register onShowLogin={() => setShowRegister(false)} />
+    ) : (
+      <Login
+        onLogin={() => setIsLoggedIn(true)}
+        onShowRegister={() => setShowRegister(true)}
+      />
     );
   }
 
@@ -216,7 +195,7 @@ function App() {
             <h1>Chiron Hospital</h1>
           </div>
 
-          <div>
+          <div className="header-actions">
             <button className="reset-btn" onClick={resetSystem}>
               Reset System
             </button>
